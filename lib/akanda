@@ -42,8 +42,8 @@ function configure_akanda() {
 }
 
 function configure_akanda_nova() {
-    iniset $NOVA_CONF network_api_class akanda.nova.quantumv2.api.API
-    iniset $NOVA_CONF service_quantum_metadata_proxy True
+    iniset $NOVA_CONF DEFAULT network_api_class akanda.nova.quantumv2.api.API
+    iniset $NOVA_CONF DEFAULT service_quantum_metadata_proxy True
 }
 
 function configure_akanda_quantum() {
