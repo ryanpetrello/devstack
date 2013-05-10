@@ -852,7 +852,6 @@ fi
 if is_service_enabled nova; then
     echo_summary "Configuring Nova"
     configure_nova
-    configure_akanda_nova
 fi
 
 if is_service_enabled n-net q-dhcp; then
@@ -900,6 +899,7 @@ if is_service_enabled nova; then
     # Additional Nova configuration that is dependent on other services
     if is_service_enabled quantum; then
         create_nova_conf_quantum
+        configure_akanda_nova
     elif is_service_enabled n-net; then
         create_nova_conf_nova_network
     fi
