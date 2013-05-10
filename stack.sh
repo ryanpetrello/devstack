@@ -29,7 +29,6 @@ source $TOP_DIR/functions
 # and ``DISTRO``
 GetDistro
 
-
 # Global Settings
 # ===============
 
@@ -59,6 +58,23 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
 fi
 source $TOP_DIR/stackrc
 
+# Initialize the default settings for Akanda
+# so they don't have to be set in the localrc.
+Q_PLUGIN=openvswitch
+LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
+NOVA_VIF_DRIVER=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver
+NOVA_USE_QUANTUM_API=v2
+HOST_IP=192.168.27.100
+HOST_IP_IFACE=eth1
+QUANTUM_LB_PRIVATE_INTERFACE=eth1
+NETWORK_GATEWAY=192.168.123.1
+FIXED_RANGE=192.168.123.0/24
+KEYSTONE_TOKEN_FORMAT=UUID
+Q_META_DATA_IP=127.0.0.1
+QUANTUM_BRANCH=akanda_g_rc
+QUANTUM_REPO=git@github.com:dreamhost/quantum.git
+enable_service q-svc,q-agt,ak-rug
+disable_service q-l3,q-meta,n-net,q-dhcp
 
 # Local Settings
 # --------------
@@ -267,6 +283,7 @@ source $TOP_DIR/lib/heat
 source $TOP_DIR/lib/quantum
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
+source $TOP_DIR/lib/akanda
 
 # Set the destination directories for OpenStack projects
 OPENSTACKCLIENT_DIR=$DEST/python-openstackclient
@@ -574,6 +591,10 @@ if is_service_enabled quantum nova; then
     install_quantumclient
 fi
 
+# nova - none
+# rug - quantum client
+# quantum - none
+
 git_clone $OPENSTACKCLIENT_REPO $OPENSTACKCLIENT_DIR $OPENSTACKCLIENT_BRANCH
 setup_develop $OPENSTACKCLIENT_DIR
 
@@ -650,6 +671,11 @@ if is_service_enabled tls-proxy; then
     init_cert
     # Add name to /etc/hosts
     # don't be naive and add to existing line!
+fi
+
+if is_service_enabled ak-rug; then
+    install_akanda
+    configure_akanda
 fi
 
 if [[ $TRACK_DEPENDS = True ]]; then
@@ -807,6 +833,7 @@ if is_service_enabled quantum; then
     echo_summary "Configuring Quantum"
 
     configure_quantum
+    configure_akanda_quantum
     init_quantum
 fi
 
@@ -825,6 +852,7 @@ fi
 if is_service_enabled nova; then
     echo_summary "Configuring Nova"
     configure_nova
+    configure_akanda_nova
 fi
 
 if is_service_enabled n-net q-dhcp; then
@@ -1034,7 +1062,6 @@ if is_service_enabled heat; then
     start_heat
 fi
 
-
 # Create account rc files
 # =======================
 
@@ -1088,6 +1115,12 @@ if is_service_enabled g-reg; then
     fi
 fi
 
+if is_service_enabled ak-rug; then
+    # Akanda
+    pre_start_akanda
+    start_akanda_rug
+fi
+
 # If we are running nova with baremetal driver, there are a few
 # last-mile configuration bits to attend to, which must happen
 # after n-api and n-sch have started.
@@ -1112,7 +1145,6 @@ if is_service_enabled nova && is_baremetal; then
     sudo pkill nova-baremetal-deploy-helper || true
     screen_it baremetal "nova-baremetal-deploy-helper"
 fi
-
 
 # Save some values we generated for later use
 CURRENT_RUN_TIME=$(date "+$TIMESTAMP_FORMAT")
