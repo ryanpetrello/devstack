@@ -73,8 +73,8 @@ KEYSTONE_TOKEN_FORMAT=UUID
 Q_META_DATA_IP=127.0.0.1
 QUANTUM_BRANCH=akanda_g_rc
 QUANTUM_REPO=git@github.com:dreamhost/quantum.git
-enable_service q-svc,q-agt,ak-rug
-disable_service q-l3,q-meta,n-net,q-dhcp
+enable_service q-svc q-agt ak-rug
+disable_service q-l3 q-meta n-net q-dhcp
 
 # Local Settings
 # --------------
