@@ -1,0 +1,97 @@
+# -*- mode: shell-script -*-
+# lib/akanda
+# functions specific to akanda
+
+# Set up default directories
+AKANDA_NOVA_DIR=$DEST/akanda-nova
+AKANDA_NOVA_REPO=git@github.com:dreamhost/akanda-nova.git
+
+AKANDA_QUANTUM_DIR=$DEST/akanda-quantum
+AKANDA_QUANTUM_REPO=git@github.com:dreamhost/akanda-quantum.git
+
+AKANDA_RUG_DIR=$DEST/akanda-rug
+AKANDA_RUG_REPO=git@github.com:dreamhost/akanda-rug.git
+
+AKANDA_CONF_DIR=/etc/akanda
+AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
+
+AKANDA_ISO_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.iso}
+AKANDA_ISO_DEFAULT=https://objects.dreamhost.com/dhc/akanda.iso
+
+function configure_akanda() {
+    if [[ ! -d $AKANDA_CONF_DIR ]]; then
+        sudo mkdir -p $AKANDA_CONF_DIR
+    fi
+    sudo chown $STACK_USER $AKANDA_CONF_DIR
+
+    cp $AKANDA_RUG_DIR/etc/rug.ini $AKANDA_RUG_CONF
+    iniset $AKANDA_RUG_CONF DEFAULT verbose True
+    iniset $AKANDA_RUG_CONF DEFAULT admin_user $Q_ADMIN_USERNAME
+    iniset $AKANDA_RUG_CONF DEFAULT admin_password $SERVICE_PASSWORD
+    iniset $AKANDA_RUG_CONF DEFAULT rabbit_host $RABBIT_HOST
+    iniset $AKANDA_RUG_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+
+    if [ ! -f $AKANDA_ISO_FILE ]
+    then
+        typeset isodir=$(dirname $AKANDA_ISO_FILE)
+        sudo mkdir -p $isodir
+        sudo chown $STACK_USER $isodir
+        echo "Downloading ISO file to $AKANDA_ISO_FILE"
+        wget $AKANDA_ISO_DEFAULT -O $AKANDA_ISO_FILE
+    fi
+}
+
+function configure_akanda_nova() {
+    iniset $NOVA_CONF DEFAULT network_api_class akanda.nova.quantumv2.api.API
+    iniset $NOVA_CONF DEFAULT service_quantum_metadata_proxy True
+}
+
+function configure_akanda_quantum() {
+    iniset $QUANTUM_CONF DEFAULT core_plugin akanda.quantum.plugins.ovs_quantum_plugin.OVSQuantumPluginV2
+    iniset $QUANTUM_CONF DEFAULT api_extensions_path $AKANDA_QUANTUM_DIR/akanda/quantum/extensions
+}
+
+function install_akanda() {
+    git_clone $AKANDA_QUANTUM_REPO $AKANDA_QUANTUM_DIR master
+    setup_develop $AKANDA_QUANTUM_DIR
+
+    git_clone $AKANDA_NOVA_REPO $AKANDA_NOVA_DIR master
+    setup_develop $AKANDA_NOVA_DIR
+
+    git_clone $AKANDA_RUG_REPO $AKANDA_RUG_DIR master
+    setup_develop $AKANDA_RUG_DIR
+}
+
+function pre_start_akanda() {
+    typeset auth_args="--os-username $Q_ADMIN_USERNAME --os-password $SERVICE_PASSWORD --os-tenant-name $SERVICE_TENANT_NAME --os-auth-url $OS_AUTH_URL"
+    quantum $auth_args net-show public
+    typeset exists=$?
+    if [ $exists -ne 0 ]
+    then
+        quantum $auth_args net-create public --router:external=True
+        quantum $auth_args subnet-create --ip-version 4 public 172.16.77.0/24
+        quantum $auth_args subnet-create --ip-version 6 public fdee:9f85:83be::/48
+    fi
+    
+    quantum $auth_args net-show public | grep ' id ' | awk '{ print $4 }'
+
+    typeset public_network_id=$(quantum $auth_args net-show public | grep ' id ' | awk '{ print $4 }')
+    iniset $AKANDA_RUG_CONF DEFAULT external_network_id $public_network_id
+
+    quantum $auth_args net-create mgt
+    typeset mgt_network_id=$(quantum $auth_args net-show mgt | grep ' id ' | awk '{ print $4 }')
+    iniset $AKANDA_RUG_CONF DEFAULT management_network_id $mgt_network_id
+
+    typeset mgt_subnet_id=$(quantum $auth_args subnet-create mgt fdca:3ba5:a17a:acda::/64 --ip-version=6 | grep ' id ' | awk '{ print $4 }')
+    iniset $AKANDA_RUG_CONF DEFAULT management_subnet_id $mgt_subnet_id
+
+    glance $auth_args image-create --name akanda --disk-format iso --container-format bare --property hw_vif_model=e1000 --file $AKANDA_ISO_FILE
+    typeset image_id=$(glance $auth_args image-show akanda | grep ' id ' | awk '{print $4}')
+    iniset $AKANDA_RUG_CONF DEFAULT router_image_uuid $image_id
+    
+    iniset $AKANDA_RUG_CONF DEFAULT auth_url $OS_AUTH_URL
+}
+
+function start_akanda_rug() {
+    screen_it ak-rug "cd $AKANDA_RUG_DIR && sudo akanda-rug-service --config-file $AKANDA_RUG_CONF"
+}
