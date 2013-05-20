@@ -107,3 +107,13 @@ function pre_start_akanda() {
 function start_akanda_rug() {
     screen_it ak-rug "cd $AKANDA_RUG_DIR && sudo akanda-rug-service --config-file $AKANDA_RUG_CONF"
 }
+
+function post_start_akanda() {
+    echo "Creating demo user network and subnet"
+    quantum --os-username demo --os-password $ADMIN_PASSWORD \
+        --os-tenant-name demo --os-auth-url $OS_AUTH_URL \
+        net-create thenet
+    quantum --os-username demo --os-password $ADMIN_PASSWORD \
+        --os-tenant-name demo --os-auth-url $OS_AUTH_URL \
+        subnet-create thenet 192.168.0.0/24
+}

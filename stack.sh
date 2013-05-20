@@ -1119,6 +1119,7 @@ if is_service_enabled ak-rug; then
     # Akanda
     pre_start_akanda
     start_akanda_rug
+    post_start_akanda
 fi
 
 # If we are running nova with baremetal driver, there are a few
