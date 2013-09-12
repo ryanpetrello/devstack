@@ -66,6 +66,22 @@ if [[ ! -r $TOP_DIR/stackrc ]]; then
 fi
 source $TOP_DIR/stackrc
 
+# Initialize the default settings for Akanda
+# so they don't have to be set in the localrc.
+Q_PLUGIN=openvswitch
+LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
+NOVA_VIF_DRIVER=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver
+HOST_IP=${HOST_IP:-192.168.27.100}
+HOST_IP_IFACE=eth1
+#Note(rods): not sure we still need this option so lets comment it out for now
+#QUANTUM_LB_PRIVATE_INTERFACE=eth1
+NETWORK_GATEWAY=192.168.123.1
+FIXED_RANGE=192.168.123.0/24
+KEYSTONE_TOKEN_FORMAT=UUID
+Q_META_DATA_IP=127.0.0.1
+NEUTRON_BRANCH=master
+enable_service q-svc q-agt ak-rug
+disable_service q-l3 q-meta n-net q-dhcp
 
 # Local Settings
 # --------------
@@ -319,6 +335,7 @@ source $TOP_DIR/lib/neutron
 source $TOP_DIR/lib/baremetal
 source $TOP_DIR/lib/ldap
 source $TOP_DIR/lib/ironic
+source $TOP_DIR/lib/akanda
 
 # Look for Nova hypervisor plugin
 NOVA_PLUGINS=$TOP_DIR/lib/nova_plugins
@@ -733,6 +750,11 @@ if is_service_enabled ir-api ir-cond; then
     configure_ironic
 fi
 
+if is_service_enabled ak-rug; then
+    install_akanda
+    configure_akanda
+fi
+
 if [[ $TRACK_DEPENDS = True ]]; then
     $DEST/.venv/bin/pip freeze > $DEST/requires-post-pip
     if ! diff -Nru $DEST/requires-pre-pip $DEST/requires-post-pip > $DEST/requires.diff; then
@@ -918,6 +940,7 @@ if is_service_enabled neutron; then
     echo_summary "Configuring Neutron"
 
     configure_neutron
+    configure_akanda_neutron
     # Run init_neutron only on the node hosting the neutron API server
     if is_service_enabled $DATABASE_BACKENDS && is_service_enabled q-svc; then
         init_neutron
@@ -990,6 +1013,7 @@ if is_service_enabled nova; then
     # Additional Nova configuration that is dependent on other services
     if is_service_enabled neutron; then
         create_nova_conf_neutron
+        configure_akanda_nova
     elif is_service_enabled n-net; then
         create_nova_conf_nova_network
     fi
@@ -1289,6 +1313,14 @@ if is_service_enabled g-reg; then
        done
     fi
 fi
+
+if is_service_enabled ak-rug; then
+    # Akanda
+    pre_start_akanda
+    start_akanda_rug
+    post_start_akanda
+fi
+
 
 # If we are running nova with baremetal driver, there are a few
 # last-mile configuration bits to attend to, which must happen
