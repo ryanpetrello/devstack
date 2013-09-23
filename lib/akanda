@@ -15,6 +15,9 @@ AKANDA_RUG_REPO=git@github.com:dreamhost/akanda-rug.git
 AKANDA_CONF_DIR=/etc/akanda
 AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
 
+# FIXME(rods): The path to the akanda.iso refer or assume in some
+#              way that the env has been created using the vagrant
+#              tool. We should make it more generic
 AKANDA_ISO_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.iso}
 AKANDA_ISO_DEFAULT=https://objects.dreamhost.com/dhc/akanda.iso
 
@@ -33,20 +36,20 @@ function configure_akanda() {
 }
 
 function configure_akanda_nova() {
-    iniset $NOVA_CONF DEFAULT network_api_class akanda.nova.quantumv2.api.API
-    iniset $NOVA_CONF DEFAULT service_quantum_metadata_proxy True
+    iniset $NOVA_CONF DEFAULT network_api_class akanda.nova.neutronv2.api.API
+    iniset $NOVA_CONF DEFAULT service_neutron_metadata_proxy True
 }
 
 function configure_akanda_neutron() {
-    iniset $NEUTRON_CONF DEFAULT core_plugin akanda.quantum.plugins.ovs_quantum_plugin.OVSQuantumPluginV2
-    iniset $NEUTRON_CONF DEFAULT api_extensions_path $AKANDA_NEUTRON_DIR/akanda/quantum/extensions
+    iniset $NEUTRON_CONF DEFAULT core_plugin akanda.neutron.plugins.ovs_neutron_plugin.OVSNeutronPluginV2
+    iniset $NEUTRON_CONF DEFAULT api_extensions_path $AKANDA_NEUTRON_DIR/akanda/neutron/extensions
 }
 
 function install_akanda() {
-    git_clone $AKANDA_NEUTRON_REPO $AKANDA_NEUTRON_DIR master
+    git_clone $AKANDA_NEUTRON_REPO $AKANDA_NEUTRON_DIR havana
     setup_develop $AKANDA_NEUTRON_DIR
 
-    git_clone $AKANDA_NOVA_REPO $AKANDA_NOVA_DIR master
+    git_clone $AKANDA_NOVA_REPO $AKANDA_NOVA_DIR havana
     setup_develop $AKANDA_NOVA_DIR
 
     git_clone $AKANDA_RUG_REPO $AKANDA_RUG_DIR feature/havana-new-architecture
