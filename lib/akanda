@@ -107,7 +107,7 @@ function pre_start_akanda() {
         (source $DEST/.akanda_dho_creds && swift -V 1.0 download -o $AKANDA_ISO_FILE akanda-images $latest) || exit 1
     fi
 
-    glance $auth_args image-create --name akanda --disk-format iso --container-format bare --property hw_vif_model=e1000 --file $AKANDA_ISO_FILE
+    glance $auth_args image-create --name akanda --disk-format iso --container-format bare --file $AKANDA_ISO_FILE
     typeset image_id=$(glance $auth_args image-show akanda | grep ' id ' | awk '{print $4}')
     iniset $AKANDA_RUG_CONF DEFAULT router_image_uuid $image_id
 
