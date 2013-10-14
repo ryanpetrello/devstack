@@ -178,7 +178,7 @@ if [[ $EUID -eq 0 ]]; then
     echo "Copying files to $STACK_USER user"
     STACK_DIR="$DEST/${TOP_DIR##*/}"
     cp -r -f -T "$TOP_DIR" "$STACK_DIR"
-    chown -R $STACK_USER "$STACK_DIR"
+    #chown -R $STACK_USER "$STACK_DIR"
     cd "$STACK_DIR"
     if [[ "$SHELL_AFTER_RUN" != "no" ]]; then
         exec sudo -u $STACK_USER  bash -l -c "set -e; bash stack.sh; bash"
@@ -210,7 +210,7 @@ fi
 
 # Create the destination directory and ensure it is writable by the user
 sudo mkdir -p $DEST
-sudo chown -R $STACK_USER $DEST
+#sudo chown -R $STACK_USER $DEST
 
 # Set ``OFFLINE`` to ``True`` to configure ``stack.sh`` to run cleanly without
 # Internet access. ``stack.sh`` must have been previously run with Internet
