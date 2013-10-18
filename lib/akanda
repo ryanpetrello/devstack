@@ -33,6 +33,7 @@ function configure_akanda() {
     iniset $AKANDA_RUG_CONF DEFAULT admin_password $SERVICE_PASSWORD
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_host $RABBIT_HOST
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
+    iniset $AKANDA_RUG_CONF DEFAULT control_exchange "neutron"
 }
 
 function configure_akanda_nova() {
