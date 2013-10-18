@@ -46,13 +46,13 @@ function configure_akanda_neutron() {
 }
 
 function install_akanda() {
-    git_clone $AKANDA_NEUTRON_REPO $AKANDA_NEUTRON_DIR havana
+    git_clone $AKANDA_NEUTRON_REPO $AKANDA_NEUTRON_DIR master
     setup_develop $AKANDA_NEUTRON_DIR
 
-    git_clone $AKANDA_NOVA_REPO $AKANDA_NOVA_DIR havana
+    git_clone $AKANDA_NOVA_REPO $AKANDA_NOVA_DIR master
     setup_develop $AKANDA_NOVA_DIR
 
-    git_clone $AKANDA_RUG_REPO $AKANDA_RUG_DIR feature/havana-new-architecture
+    git_clone $AKANDA_RUG_REPO $AKANDA_RUG_DIR master
     setup_develop $AKANDA_RUG_DIR
 }
 
@@ -115,7 +115,7 @@ function pre_start_akanda() {
 }
 
 function start_akanda_rug() {
-    screen_it ak-rug "cd $AKANDA_RUG_DIR && sudo akanda-rug-new --config-file $AKANDA_RUG_CONF"
+    screen_it ak-rug "cd $AKANDA_RUG_DIR && sudo akanda-rug-service --config-file $AKANDA_RUG_CONF"
     echo '************************************************************'
     echo "Sleeping for a while to make sure the tap device gets set up"
     echo '************************************************************'
