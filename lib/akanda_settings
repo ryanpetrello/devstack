@@ -3,6 +3,8 @@
 # Initialize the default settings for Akanda
 # so they don't have to be set in the localrc.
 
+echo "Initializing Akanda settings"
+
 Q_PLUGIN=openvswitch
 LIBVIRT_FIREWALL_DRIVER=nova.virt.firewall.NoopFirewallDriver
 NOVA_VIF_DRIVER=nova.virt.libvirt.vif.LibvirtOpenVswitchDriver
