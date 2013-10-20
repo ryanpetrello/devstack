@@ -37,5 +37,5 @@ AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
 AKANDA_ISO_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.iso}
 AKANDA_ISO_DEFAULT=https://objects.dreamhost.com/dhc/akanda.iso
 
-enable_service q-svc,q-agt,ak-rug
-disable_service q-l3,q-meta,n-net,q-dhcp
+enable_service q-svc,q-agt,ak-rug,q-l3
+disable_service q-meta,n-net,q-dhcp
