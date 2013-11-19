@@ -16,6 +16,9 @@ NETWORK_GATEWAY=192.168.123.1
 FIXED_RANGE=192.168.123.0/24
 KEYSTONE_TOKEN_FORMAT=UUID
 Q_META_DATA_IP=127.0.0.1
+
+# Checkout our neutron branch
+NEUTRON_REPO=git@github.com:dreamhost/quantum.git
 NEUTRON_BRANCH=havana.rc
 
 # Set up default directories
