@@ -45,6 +45,9 @@ function configure_akanda() {
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $AKANDA_RUG_CONF DEFAULT control_exchange "neutron"
     iniset $AKANDA_RUG_CONF DEFAULT router_instance_flavor $ROUTER_INSTANCE_FLAVOR
+    iniset $AKANDA_RUG_CONF DEFAULT boot_timeout "6000"
+    iniset $AKANDA_RUG_CONF DEFAULT num_worker_processes "2"
+    iniset $AKANDA_RUG_CONF DEFAULT num_worker_threads "2"
 }
 
 function configure_akanda_nova() {
