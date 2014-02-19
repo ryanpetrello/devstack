@@ -15,11 +15,21 @@ AKANDA_RUG_REPO=git@github.com:dreamhost/akanda-rug.git
 AKANDA_CONF_DIR=/etc/akanda
 AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
 
-# FIXME(rods): The path to the akanda.iso refer or assume in some
-#              way that the env has been created using the vagrant
-#              tool. We should make it more generic
+AKANDA_RAW_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.qcow2}
+
 AKANDA_ISO_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.iso}
 AKANDA_ISO_DEFAULT=https://objects.dreamhost.com/dhc/akanda.iso
+
+if [ -f $AKANDA_RAW_FILE ]
+then
+    AKANDA_APPLIANCE_FILE=$AKANDA_RAW_FILE
+    ROUTER_INSTANCE_FLAVOR=2
+    AKANDA_CONTAINER_FORMAT='qcow2'
+else
+    AKANDA_APPLIANCE_FILE=$AKANDA_ISO_FILE
+    ROUTER_INSTANCE_FLAVOR=1
+    AKANDA_CONTAINER_FORMAT='iso'
+fi
 
 function configure_akanda() {
     if [[ ! -d $AKANDA_CONF_DIR ]]; then
@@ -34,6 +44,7 @@ function configure_akanda() {
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_host $RABBIT_HOST
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
     iniset $AKANDA_RUG_CONF DEFAULT control_exchange "neutron"
+    iniset $AKANDA_RUG_CONF DEFAULT router_instance_flavor $ROUTER_INSTANCE_FLAVOR
 }
 
 function configure_akanda_nova() {
@@ -100,11 +111,11 @@ function pre_start_akanda() {
     neutron $auth_args subnet-delete $PRIVATE_SUBNET_NAME
     neutron $auth_args net-delete $PRIVATE_NETWORK_NAME
 
-    if [ -f $AKANDA_ISO_FILE ]
+    if [ -f $AKANDA_APPLIANCE_FILE ]
     then
-        echo "Using existing Akanda image file $AKANDA_ISO_FILE"
+        echo "Using existing Akanda image file $AKANDA_APPLIANCE_FILE"
     else
-        typeset isodir=$(dirname $AKANDA_ISO_FILE)
+        typeset isodir=$(dirname $AKANDA_APPLIANCE_FILE)
         sudo mkdir -p $isodir
         sudo chown $STACK_USER $isodir
         # Load the credentials from a file outside of the git repo,
@@ -117,11 +128,11 @@ function pre_start_akanda() {
         echo "Looking for latest ISO file"
         typeset latest=$(source $DEST/.akanda_dho_creds && swift -V 1.0 download akanda-images -o - LATEST)
         [ $? -ne 0 ] && exit 1
-        echo "Downloading ISO file to $AKANDA_ISO_FILE"
-        (source $DEST/.akanda_dho_creds && swift -V 1.0 download -o $AKANDA_ISO_FILE akanda-images $latest) || exit 1
+        echo "Downloading ISO file to $AKANDA_APPLIANCE_FILE"
+        (source $DEST/.akanda_dho_creds && swift -V 1.0 download -o $AKANDA_APPLIANCE_FILE akanda-images $latest) || exit 1
     fi
 
-    glance $auth_args image-create --name akanda --disk-format iso --container-format bare --file $AKANDA_ISO_FILE
+    glance $auth_args image-create --name akanda --disk-format $AKANDA_CONTAINER_FORMAT --container-format bare --file $AKANDA_APPLIANCE_FILE
     typeset image_id=$(glance $auth_args image-show akanda | grep ' id ' | awk '{print $4}')
     iniset $AKANDA_RUG_CONF DEFAULT router_image_uuid $image_id
 
