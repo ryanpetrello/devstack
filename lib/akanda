@@ -12,7 +12,7 @@ AKANDA_NEUTRON_REPO=git@github.com:dreamhost/akanda-quantum.git
 AKANDA_RUG_DIR=$DEST/akanda-rug
 AKANDA_RUG_REPO=git@github.com:dreamhost/akanda-rug.git
 
-AKANDA_CONF_DIR=/etc/akanda
+AKANDA_CONF_DIR=/etc/akanda-rug
 AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
 
 AKANDA_RAW_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.qcow2}
