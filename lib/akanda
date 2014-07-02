@@ -39,7 +39,7 @@ function configure_akanda() {
 
     cp $AKANDA_RUG_DIR/etc/rug.ini $AKANDA_RUG_CONF
     iniset $AKANDA_RUG_CONF DEFAULT verbose True
-    iniset $AKANDA_RUG_CONF DEFAULT admin_user akanda-rug
+    iniset $AKANDA_RUG_CONF DEFAULT admin_user $Q_ADMIN_USERNAME
     iniset $AKANDA_RUG_CONF DEFAULT admin_password $SERVICE_PASSWORD
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_host $RABBIT_HOST
     iniset $AKANDA_RUG_CONF DEFAULT rabbit_password $RABBIT_PASSWORD
@@ -141,18 +141,6 @@ function pre_start_akanda() {
     iniset $AKANDA_RUG_CONF DEFAULT router_image_uuid $image_id
 
     iniset $AKANDA_RUG_CONF DEFAULT auth_url $OS_AUTH_URL
-
-    ADMIN_ROLE=$(keystone role-list | awk "/ admin / { print \$2 }")
-    AKANDA_RUG_USER=$(keystone user-create \
-        --name=akanda-rug \
-        --pass="$SERVICE_PASSWORD" \
-        --tenant_id $SERVICE_TENANT \
-        --email=akanda-rug@example.com \
-        | grep " id " | get_field 2)
-    keystone user-role-add \
-        --tenant-id $SERVICE_TENANT \
-        --user-id $AKANDA_RUG_USER \
-        --role-id $ADMIN_ROLE
 }
 
 function start_akanda_rug() {
