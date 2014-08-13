@@ -15,10 +15,10 @@ AKANDA_RUG_REPO=git@github.com:dreamhost/akanda-rug.git
 AKANDA_CONF_DIR=/etc/akanda-rug
 AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
 
-AKANDA_RAW_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.qcow2}
+AKANDA_RAW_FILE=${AKANDA_IMAGE_FILE:-/vagrant/data/akanda.qcow2}
 
-AKANDA_ISO_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.iso}
-AKANDA_ISO_DEFAULT=https://objects.dreamhost.com/dhc/akanda.iso
+AKANDA_IMAGE_FILE=${AKANDA_IMAGE_FILE:-/vagrant/data/akanda.qcow2}
+AKANDA_IMAGE_DEFAULT=https://objects.dreamhost.com/akanda-linux/LATEST
 
 if [ -f $AKANDA_RAW_FILE ]
 then
@@ -26,7 +26,7 @@ then
     ROUTER_INSTANCE_FLAVOR=2
     AKANDA_CONTAINER_FORMAT='qcow2'
 else
-    AKANDA_APPLIANCE_FILE=$AKANDA_ISO_FILE
+    AKANDA_APPLIANCE_FILE=$AKANDA_IMAGE_FILE
     ROUTER_INSTANCE_FLAVOR=1
     AKANDA_CONTAINER_FORMAT='iso'
 fi
@@ -123,17 +123,17 @@ function pre_start_akanda() {
         sudo mkdir -p $isodir
         sudo chown $STACK_USER $isodir
         # Load the credentials from a file outside of the git repo,
-        # find the latest ISO file name, then download that file.
+        # find the latest IMAGE file name, then download that file.
         if [ ! -f $DEST/.akanda_dho_creds ]
         then
             echo "Did not find $DEST/.akanda_dho_creds" 1>&2
             exit 1
         fi
-        echo "Looking for latest ISO file"
-        typeset latest=$(source $DEST/.akanda_dho_creds && swift -V 1.0 download akanda-images -o - LATEST)
+        echo "Looking for latest IMAGE file"
+        typeset latest=$(source $DEST/.akanda_dho_creds && swift -V 1.0 download akanda-linux -o - LATEST)
         [ $? -ne 0 ] && exit 1
-        echo "Downloading ISO file to $AKANDA_APPLIANCE_FILE"
-        (source $DEST/.akanda_dho_creds && swift -V 1.0 download -o $AKANDA_APPLIANCE_FILE akanda-images $latest) || exit 1
+        echo "Downloading IMAGE file to $AKANDA_APPLIANCE_FILE"
+        (source $DEST/.akanda_dho_creds && swift -V 1.0 download -o $AKANDA_APPLIANCE_FILE akanda-linux $latest) || exit 1
     fi
 
     glance $auth_args image-create --name akanda --disk-format $AKANDA_CONTAINER_FORMAT --container-format bare --file $AKANDA_APPLIANCE_FILE

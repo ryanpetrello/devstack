@@ -32,8 +32,8 @@ AKANDA_RUG_REPO=git@github.com:dreamhost/akanda-rug.git
 AKANDA_CONF_DIR=/etc/akanda
 AKANDA_RUG_CONF=$AKANDA_CONF_DIR/rug.ini
 
-AKANDA_ISO_FILE=${AKANDA_ISO_FILE:-/vagrant/data/akanda.iso}
-AKANDA_ISO_DEFAULT=https://objects.dreamhost.com/dhc/akanda.iso
+AKANDA_IMAGE_FILE=${AKANDA_IMAGE_FILE:-/vagrant/data/akanda.qcow2}
+AKANDA_IMAGE_DEFAULT=https://objects.dreamhost.com/akanda-linux/LATEST
 
 enable_service q-svc q-agt ak-rug
 disable_service n-net
