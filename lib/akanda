@@ -23,6 +23,7 @@ AKANDA_IMAGE_DEFAULT=https://objects.dreamhost.com/akanda-linux/LATEST
 AKANDA_APPLIANCE_FILE=$AKANDA_IMAGE_FILE
 ROUTER_INSTANCE_FLAVOR=2
 AKANDA_CONTAINER_FORMAT='qcow2'
+PUBLIC_INTERFACE_DEFAULT='eth0'
 
 function configure_akanda() {
     if [[ ! -d $AKANDA_CONF_DIR ]]; then
@@ -85,9 +86,13 @@ function pre_start_akanda() {
         # Remove the ipv6 subnet created automatically before adding our own.
         _remove_subnets public
 
-        neutron $auth_args subnet-create --ip-version 4 public 172.16.77.0/24
+        typeset public_subnet_id=$(neutron $auth_args subnet-create --ip-version 4 public 172.16.77.0/24 | grep ' id ' | awk '{ print $4 }')
+        iniset $AKANDA_RUG_CONF DEFAULT external_subnet_id $public_subnet_id
         neutron $auth_args subnet-create --ip-version 6 public fdee:9f85:83be::/48
     fi
+
+    # setup masq rule for public network
+    sudo iptables -t nat -A POSTROUTING -s 172.16.77.0/24 -o $PUBLIC_INTERFACE_DEFAULT -j MASQUERADE
 
     neutron $auth_args net-show public | grep ' id ' | awk '{ print $4 }'
 
