@@ -34,6 +34,9 @@ function install_oslo() {
     git_clone $OSLOCFG_REPO $OSLOCFG_DIR $OSLOCFG_BRANCH
     setup_develop $OSLOCFG_DIR
 
+    # keystone havana currently fails without a recent oslo.config.  Pin this to a version we know works for havana
+    sudo pip install -U "oslo.config == 1.4.0"
+
     git_clone $OSLOMSG_REPO $OSLOMSG_DIR $OSLOMSG_BRANCH
     setup_develop $OSLOMSG_DIR
 }
